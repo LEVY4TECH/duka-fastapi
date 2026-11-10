@@ -1,9 +1,10 @@
 from fastapi import FastAPI
 from data_schemas import ProductRequest, ProductResponse
-from models import Base, Product
+from models import Base, Product, User
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
+from datetime import datetime
 
 app = FastAPI()
 
@@ -19,6 +20,18 @@ session = Session(engine)
 @app.get("/")
 def home():
     return {"Duka FastAPI version" : "1.0"}
+
+def add_user():
+    user = User(
+        full_name = "Levy Leshan",
+        email = "leshan@gmail.com",
+        password = "hgyt123",
+        created_at=datetime.utcnow()
+    )
+    session.add(user)
+    session.commit()
+
+add_user()
 
 @app.post("/products")
 def create_product(prod : ProductRequest):
