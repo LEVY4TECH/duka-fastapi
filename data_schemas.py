@@ -12,3 +12,4 @@ class ProductResponse(BaseModel):
     buying_price : float
     selling_price : float
     stock_quantity : int
+    
