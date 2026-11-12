@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from data_schemas import ProductRequest, ProductResponse, SaleRequest, SaleResponse, SaleDetailsRequest, SaleDetailsResponse, PaymentRequest, PaymentResponse
 from models import Base, Product, User, Sale, SaleDetail, Payment
 
@@ -33,6 +33,8 @@ def add_user():
 
 add_user()
 
+# Products Route
+
 @app.post("/products", response_model = ProductResponse)
 def create_product(prod : ProductRequest):
     # store in the database
@@ -54,6 +56,47 @@ def get_products():
     
     return products
 
+@app.get("/products/{product_id}", response_model=ProductResponse)
+def get_single_product(product_id):
+    query = select(Product).where(Product.id == product_id)
+    product = session.scalars(query).first()
+    
+    if product is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Product not found"
+        )
+        
+    return product
+    
+
+@app.put("/products/{product_id}", response_model=ProductResponse)
+def update_product(product_id : int, prod : ProductRequest):
+    query = select(Product).where(Product.id == product_id)
+    product = session.scalars(query).first()
+    
+    if product is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Product not found"
+        )
+        
+    product.product_name = prod.product_name
+    product.buying_price = prod.buying_price
+    product.selling_price = prod.selling_price
+    product.stock_quantity = prod.stock_quantity
+    
+    
+    
+    session.commit()
+    
+    
+    return product
+
+# End product routes
+
+# sales route
+
 @app.post("/sales", response_model=SaleResponse)
 def create_sale(sale : SaleRequest):
     dbprod = Sale(
@@ -71,6 +114,10 @@ def get_sales():
     sales = session.scalars(query)
     
     return sales
+
+# End of sales route
+
+# Sale Details route
 
 @app.post("/sale_details", response_model=SaleDetailsResponse)
 def create_sale_detail(sale_detail : SaleDetailsRequest):
@@ -92,6 +139,10 @@ def get_sale_details():
     sale_details = session.scalars(query)
     
     return sale_details
+
+# End of sale details route
+
+# Payments Route
 
 @app.post("/payments", response_model=PaymentResponse)
 def create_payment(pay : PaymentRequest):
@@ -116,5 +167,7 @@ def get_payments():
     payments = session.scalars(query)
     
     return payments
+
+# End of payments route
     
     
