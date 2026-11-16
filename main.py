@@ -115,6 +115,39 @@ def get_sales():
     
     return sales
 
+@app.get("/sales/{sale_id}", response_model=SaleResponse)
+def get_single_sale(sale_id):
+    query = select(Sale).where(Sale.id == sale_id)
+    sale = session.scalars(query).first()
+    
+    if sale is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Sale not found"
+        )
+        
+        
+    return sale
+
+@app.put("/sales/{sale_id}", response_model=SaleResponse)
+def update_sale(sale_id : int, sale : SaleRequest):
+    query = select(Sale).where(Sale.id == sale_id)
+    sale = session.scalars(query).first()
+    
+    if sale is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Sale not found"
+        )
+        
+    sale.product_id = sale.product_id
+    sale.amount = sale.amount
+    
+    session.commit()
+    return sale
+    
+    
+
 # End of sales route
 
 # Sale Details route
@@ -139,6 +172,40 @@ def get_sale_details():
     sale_details = session.scalars(query)
     
     return sale_details
+
+@app.get("/sale_details/{saleDetail_id}", response_model=SaleDetailsResponse)
+def get_single_sale_detail(saleDetail_id):
+    query = select(SaleDetail).where(SaleDetail.id == saleDetail_id)
+    sale_detail = session.scalars(query).first()
+    
+    if sale_detail is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Sale detail not found"
+        )
+        
+    return sale_detail
+
+@app.put("/sale_details/{saleDetail_id}", response_model=SaleDetailsResponse)
+def update_sale_detail(saleDetail_id : int, detail : SaleDetailsRequest):
+    query = select(SaleDetail).where(SaleDetail.id == saleDetail_id)
+    sale_detail = session.scalars(query).first()
+    
+    if sale_detail is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Sale detail not found"
+        )
+        
+    detail.sale_id = sale_detail.sale_id
+    detail.product_id = sale_detail.product_id
+    detail.quantity = sale_detail.quantity
+    detail.selling_price = sale_detail.selling_price
+    
+    session.commit()
+    return sale_detail
+    
+    
 
 # End of sale details route
 
@@ -167,6 +234,20 @@ def get_payments():
     payments = session.scalars(query)
     
     return payments
+
+@app.get("/payments/{payment_id}", response_model=PaymentResponse)
+def get_single_payment(payment_id):
+    query = select(Payment).where(Payment.id == payment_id)
+    payment = session.scalars(query).first()
+    
+    if payment is None:
+        raise HTTPException(
+            status_code=404,
+            detail="payment not found"
+        )
+        
+    return payment
+    
 
 # End of payments route
     
