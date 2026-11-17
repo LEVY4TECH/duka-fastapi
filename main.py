@@ -247,6 +247,29 @@ def get_single_payment(payment_id):
         )
         
     return payment
+
+@app.put("/payments/{payment_id}", response_model=PaymentResponse)
+def update_payment(payment_id : int, pay : PaymentRequest):
+    query = select(Payment).where(Payment.id == payment_id)
+    payment = session.scalars(query).first()
+    
+    if payment is None:
+        raise HTTPException(
+            status_code=404,
+            detail="payment not found"
+        )
+        
+    pay.sales_id = pay.sales_id
+    pay.amount = pay.amount
+    pay.transaction_code = pay.transaction_code
+    pay.mrid = pay.mrid
+    pay.crid = pay.crid
+    pay.payment_status = pay.payment_status
+    pay.phone_number = pay.phone_number
+    
+    session.commit()
+    return payment
+    
     
 
 # End of payments route
