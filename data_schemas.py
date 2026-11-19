@@ -1,6 +1,30 @@
 from pydantic import BaseModel, Field
 from datetime import datetime, timezone
 
+class RegisterRequest(BaseModel):
+    full_name : str
+    email : str
+    password : str
+    
+class RegisterResponse(BaseModel):
+    id : int
+    full_name : str
+    email : str
+    password : str
+    created_at : datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    token : str
+    
+class LoginRequest(BaseModel):
+    email : str
+    password : str
+    
+class LoginResponse(BaseModel):
+    id : int
+    full_name : str
+    email : str
+    password : str
+    token : str
+
 class ProductRequest(BaseModel):
     product_name : str
     buying_price : float

@@ -1,6 +1,7 @@
-from fastapi import FastAPI, HTTPException
-from data_schemas import ProductRequest, ProductResponse, SaleRequest, SaleResponse, SaleDetailsRequest, SaleDetailsResponse, PaymentRequest, PaymentResponse
+from fastapi import FastAPI, HTTPException, status, Depends
+from data_schemas import ProductRequest, ProductResponse, SaleRequest, SaleResponse, SaleDetailsRequest, SaleDetailsResponse, PaymentRequest, PaymentResponse, LoginRequest, LoginResponse, RegisterRequest, RegisterResponse
 from models import Base, Product, User, Sale, SaleDetail, Payment
+from myjwt import verify_password, create_access_token, get_password_hash, get_current_user
 
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
@@ -21,22 +22,69 @@ session = Session(engine)
 def home():
     return {"Duka FastAPI version" : "1.0"}
 
-def add_user():
-    user = User(
-        full_name = "Levy Leshan",
-        email = "leshan@gmail.com",
-        password = "hgyt123",
-        created_at=datetime.utcnow()
-    )
-    session.add(user)
-    session.commit()
 
-add_user()
+# authentication Routes
+@app.post("/login",response_model=LoginResponse)
+def login(user : LoginRequest):
+    
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    
+     
+    query = select(User).where(User.email == user.email)
+    db_user = session.scalars(query).first()
+    
+    if not db_user:
+        raise credentials_exception 
+           
+    if not verify_password(user.password, db_user.password):
+        raise credentials_exception
+    
+    db_user.token = create_access_token({"sub" : db_user.email})
+    
+    return db_user
+
+@app.post("/register", response_model=RegisterResponse)
+def register(user : RegisterRequest):
+    
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    
+    query = select(User).where(User.email == user.email)
+    db_user = session.scalars(query).first()
+    
+    if db_user:
+        raise HTTPException(
+            status_code=400,
+            detail="Email already registered"
+        )
+        
+    db_user = User(full_name = user.full_name,
+                email = user.email,
+                password = get_password_hash(user.password)
+            )
+    
+    session.add(db_user)
+    session.commit()
+    
+    db_user.token = create_access_token({"sub" : db_user.email})
+    
+    return db_user
+        
+    
 
 # Products Route
 
 @app.post("/products", response_model = ProductResponse)
-def create_product(prod : ProductRequest):
+def create_product(prod : ProductRequest, current_user : str = Depends(get_current_user)):
+    print("USER IS--------------------", current_user)
+    
     # store in the database
     dbprod = Product(
         product_name = prod.product_name,
@@ -50,7 +98,8 @@ def create_product(prod : ProductRequest):
     return dbprod
     
 @app.get("/products", response_model=list[ProductResponse])
-def get_products():
+def get_products(current_user : str = Depends(get_current_user)):
+    print("USER IS--------------------", current_user)
     query = select(Product)
     products = session.scalars(query)
     
